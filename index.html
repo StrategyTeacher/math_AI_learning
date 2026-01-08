@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>文章題AI</title>
+</head>
+<body>
+
+<h1>文章題から式を作ろう</h1>
+
+<div id="chat"></div>
+
+<input id="userInput" placeholder="ここに入力">
+<button onclick="send()">送信</button>
+
+<script>
+function send() {
+  const input = document.getElementById("userInput").value;
+  document.getElementById("chat").innerHTML += "<p>あなた：" + input + "</p>";
+}
+</script>
+
+</body>
+</html>
