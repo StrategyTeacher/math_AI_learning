@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>文章題AI（フル接続版）</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+#app {
+  background: white;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+
+button {
+  margin-top: 10px;
+  padding: 6px 12px;
+}
+
+#message {
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+#report-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+}
+
+#teacher-comment {
+  width: 100%;
+  font-size: 12px;
+}
+
+/* 印刷最適化 */
+@media print {
+  button, input {
+    display: none;
+  }
+  body {
+    background: white;
+  }
+  #app {
+    border: none;
+  }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+  <h2 id="unit-title"></h2>
+
+  <div id="problem"></div>
+  <input id="answer" placeholder="答えを書く">
+  <button onclick="submitAnswer()">送信</button>
+
+  <div id="message"></div>
+
+  <button onclick="generateReport()">レポート作成</button>
+
+  <div id="report-box" style="display:none">
+    <h3>学習レポート</h3>
+    <pre id="report-content"></pre>
+
+    <label>先生コメント</label>
+    <textarea id="teacher-comment" rows="4"></textarea>
+  </div>
+</div>
+
+<script>
+/* ========= 単元定義 ========= */
+
+const units = [
+  {
+    id: "linear",
+    name: "文字式（文章題）",
+    types: ["basic"],
+    problems: [
+      {
+        text: "1個200円のりんごをx個買いました。代金は？",
+        answer: "200x",
+        type: "basic",
+        level: 1
+      }
+    ]
+  },
+  {
+    id: "simultaneous",
+    name: "連立方程式（導入）",
+    types: ["simul"],
+    problems: [
+      {
+        text: "りんご100円、みかん80円。合計10個で1000円。式を2本作れ。",
+        answer: "x+y=10,100x+80y=1000",
+        type: "simul",
+        level: 1
+      }
+    ]
+  }
+];
+
+let currentUnit = 0;
+let problems = [];
+let currentProblem = 0;
+
+let graduationState = {};
+let difficultyState = {};
+let logs = [];
+
+/* ========= 初期化 ========= */
+
+loadUnit(0);
+
+function loadUnit(index) {
+  const unit = units[index];
+  document.getElementById("unit-title").textContent = unit.name;
+
+  problems = unit.problems;
+  graduationState = {};
+  difficultyState = {};
+
+  unit.types.forEach(t => {
+    graduationState[t] = false;
+    difficultyState[t] = 1;
+  });
+
+  currentProblem = 0;
+  showProblem();
+}
+
+/* ========= 表示 ========= */
+
+function showProblem() {
+  document.getElementById("problem").textContent =
+    problems[currentProblem].text;
+  document.getElementById("answer").value = "";
+}
+
+function showMessage(msg) {
+  document.getElementById("message").textContent = msg;
+}
+
+/* ========= 解答処理 ========= */
+
+function submitAnswer() {
+  const user = document.getElementById("answer").value.trim();
+  const p = problems[currentProblem];
+  const correct = user === p.answer;
+
+  logs.push({
+    unit: units[currentUnit].id,
+    type: p.type,
+    correct: correct
+  });
+
+  if (correct) {
+    showMessage("ええやん、その考え方で合っとる。");
+    graduationState[p.type] = true;
+  } else {
+    showMessage("ここはもう一回整理しよ。");
+  }
+
+  checkUnitCompletion();
+}
+
+/* ========= 単元完了判定 ========= */
+
+function checkUnitCompletion() {
+  const allDone = Object.values(graduationState).every(v => v);
+
+  if (allDone) {
+    currentUnit++;
+    if (currentUnit < units.length) {
+      showMessage("次の単元に進むで。");
+      loadUnit(currentUnit);
+    } else {
+      showMessage("全単元修了。お疲れさま。");
+    }
+  }
+}
+
+/* ========= レポート ========= */
+
+function generateReport() {
+  let report = "";
+  report += "【到達単元】\n";
+  report += units[currentUnit]
+    ? units[currentUnit].name
+    : "全単元修了\n";
+
+  const correctRate =
+    logs.filter(l => l.correct).length / logs.length * 100;
+
+  report += "\n【正解率】\n";
+  report += Math.round(correctRate) + "%\n";
+
+  report += "\n【所見】\n";
+  report += correctRate >= 80
+    ? "理解は安定しています。\n"
+    : "基礎の整理が必要です。\n";
+
+  document.getElementById("report-content").textContent = report;
+  document.getElementById("report-box").style.display = "block";
+}
+</script>
+</body>
+</html>
